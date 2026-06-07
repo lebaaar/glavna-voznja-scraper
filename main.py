@@ -3,7 +3,6 @@ import json
 import os
 import re
 import sys
-import time
 from datetime import datetime
 
 import requests
@@ -19,7 +18,6 @@ SINGLETON_URL = (
 CONFIG_FILE = "config.json"
 SEEN_FILE = "seen.json"
 
-MIN_INTERVAL_MINUTES = 15
 NOTIFY_LIMIT = 5 # Število kronološko najbližjih (trenutno najboljših) terminov, ki jih spremljamo in o katerih obveščamo
 HARD_PAGE_LIMIT = 100
 
@@ -125,16 +123,7 @@ def resolve_areas(value):
 
 def load_config():
     with open(CONFIG_FILE, encoding="utf-8") as f:
-        cfg = json.load(f)
-
-    interval = cfg.get("scraperIntervalMinutes")
-    if not isinstance(interval, (int, float)) or interval < MIN_INTERVAL_MINUTES:
-        raise ValueError(
-            f"'scraperIntervalMinutes' mora biti število, vsaj {MIN_INTERVAL_MINUTES} "
-            f"(trenutno: {interval!r})"
-        )
-
-    return cfg
+        return json.load(f)
 
 
 def build_filter_params(cfg):
@@ -373,21 +362,10 @@ def main():
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         sys.exit(f"Napaka v config.json: {exc}")
 
-    run_in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
-
-    if run_in_actions:
-        log("Zaznano okolje GitHub Actions - izvedem en sam zagon.")
+    try:
         run_once(filter_params, webhook_url)
-        return
-
-    interval_minutes = cfg["scraperIntervalMinutes"]
-    log(f"Scraper zagnan. Preverjanje vsakih {interval_minutes} minut.")
-    while True:
-        try:
-            run_once(filter_params, webhook_url)
-        except requests.RequestException as exc:
-            log(f"Napaka pri dostopu do e-uprave: {exc}")
-        time.sleep(interval_minutes * 60)
+    except requests.RequestException as exc:
+        sys.exit(f"Napaka pri dostopu do e-uprave: {exc}")
 
 
 if __name__ == "__main__":

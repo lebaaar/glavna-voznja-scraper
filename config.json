@@ -1,6 +1,5 @@
 {
     "preverjanjeZnanja": "voznja",
     "kategorija": "A2",
-    "obmocje": 2,
-    "scraperIntervalMinutes": 60
+    "obmocje": 2
 }

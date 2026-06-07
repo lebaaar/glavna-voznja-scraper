@@ -7,11 +7,11 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
    - `preverjanjeZnanja`: `"voznja"` ali `"teorija"`.
    - `kategorija`: kategorija vozniškega dovoljenja - ena izmed `AM, A1, A2, A, B1, B, BE, C1, C1E, C, CE, D1, D1E, D, DE, F, G`. Lahko je niz (`"A2"`) ali seznam, če želiš spremljati več kategorij hkrati, npr. `["A2", "A1", "B"]`.
    - `obmocje`: številka Območja (`1`-`5`, glej spustni seznam "Izpitni center" na e-upravi), kjer želiš opravljati glavno vožnjo. Lahko je število (`1`) ali seznam, če želiš spremljati več območij hkrati, npr. `[1, 2, 3]`.
-   - `scraperIntervalMinutes`: Interval v minutah, kako pogosto naj scraper preverja nove termine. Minimum je 15 minut. (Pri lokalnem poganjanju to določa, kako pogosto se scraper zažene v zanki; pri GitHub Actions to ne vpliva na urnik - ta je določen v `.github/workflows/scraper.yml`, glej spodaj.)
 2. V `.env` datoteki nastavi `DISCORD_WEBHOOK_URL` na URL Discord webhooka.<br>Navodila za pridobitev webhook URL-ja najdeš [tukaj](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
-3. Odloči se, kje želiš poganjati scraper - lahko ga poganjaš lokalno na svojem računalniku ali pa ga poganjaš preko GitHub Actions, da bo deloval neprekinjeno v oblaku. Navodila za obe možnosti najdeš spodaj.
 
-### Lokalno poganjanje
+### Poganjanje
+`python main.py` opravi en sam zagon - preveri trenutno najboljše termine, pošlje Discord obvestilo o novih in se zaključi (že najdene termine si zapomni v `seen.json`, da te ob naslednjem zagonu ne obvešča o istih terminih znova). Za redno preverjanje scraper poganjaj periodično prek cron job-a:
+
 1. Namesti scraper
    ```bash
    git clone https://github.com/lebaaar/glavna-voznja-scraper.git
@@ -19,21 +19,20 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
    pip install -r requirements.txt
    ```
 2. Nastavi `config.json` in `.env` datoteko (glej zgoraj).
-3. Zaženi scraper:
+3. Preizkusi scraper:
    ```bash
    python main.py
    ```
-4. Scraper bo preverjal nove termine dokler ga ne ustaviš (npr. s `Ctrl+C`). Že najdene termine si zapomni v datoteko `seen.json`, da te ob naslednjem preverjanju ne obvešča o istih terminih znova.
-
-### Poganjanje preko GitHub Actions
-1. Fork-aj ta repozitorij
-2. V nastavitvah tvojega forka pojdi v *Settings* > *Secrets and variables* > *Actions* in dodaj nov secret z imenom `DISCORD_WEBHOOK_URL` z vrednostjo tvojega Discord webhook URL-ja.
-3. V `config.json` nastavi željene parametre (glej zgoraj). Spremembe commitaj.
-4. Po potrebi prilagodi urnik (`cron`) v [`.github/workflows/scraper.yml`](.github/workflows/scraper.yml) - privzeto je nastavljen na vsakih 15 minut (`*/15 * * * *`), kar je tudi minimalni interval, ki ga GitHub Actions zanesljivo podpira.
-5. Prepričaj se, da imaš omogočene GitHub Actions za tvoj fork (zavihek *Actions* > gumb *"I understand my workflows, go ahead and enable them"*).
-6. GitHub Actions bo samodejno zagnal scraper ob definiranem intervalu (lahko ga sprožiš tudi ročno preko zavihka *Actions* > *Glavna vožnja scraper* > *Run workflow*) in preverjal nove termine. Rezultati bodo poslani na tvoj Discord kanal preko webhooka.
-
-   Scraper si med zagoni zapomni že najdene termine (`seen.json`, shranjen preko GitHub Actions cache-a), zato te o istem terminu ne bo obveščal v nedogled.
+4. Dodaj cron job:
+   ```bash
+   crontab -e
+   ```
+   in dodaj:
+   ```cron
+   */15 * * * * cd /pot/do/glavna-voznja-scraper && /usr/bin/python3 main.py >> scraper.log 2>&1
+   ```
+   Pot (`/pot/do/glavna-voznja-scraper`) in pot do Python interpreterja prilagodi svojemu sistemu.
+   Pot do Python interpreterja lahko preveriš z `which python3`.
 
 ## Legal
 Ta scraper je namenjen izključno za osebno uporabo in pomoč pri spremljanju prostih terminov za glavno vožnjo. Uporaba scraperja za množično zbiranje podatkov ali kakršnokoli drugo zlorabo je prepovedana. Avtor ne prevzema odgovornosti za kakršnekoli posledice, ki bi lahko nastale zaradi uporabe tega scraperja.

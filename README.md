@@ -29,6 +29,9 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
 
 ### Poganjanje preko GitHub Actions
 1. Fork-aj ta repozitorij
-2. V nastavitvah tvojega forka pojdi na "Secrets and variables" > "Actions" in dodaj nov secret z imenom `DISCORD_WEBHOOK_URL` in vrednostjo tvojega Discord webhook URL-ja.
+2. V nastavitvah tvojega forka pojdi v *Settings* > *Secrets and variables* > *Actions* in dodaj nov secret z imenom `DISCORD_WEBHOOK_URL` z vrednostjo tvojega Discord webhook URL-ja.
 3. V `config.json` nastavi željene parametre (glej zgoraj).
 4. GitHub Actions bo samodejno zagnal scraper ob definiranem intervalu in preverjal nove termine. Rezultati bodo poslani na tvoj Discord kanal preko webhooka.
+
+## Legal
+Ta scraper je namenjen izključno za osebno uporabo in pomoč pri spremljanju prostih terminov za glavno vožnjo. Uporaba scraperja za množično zbiranje podatkov ali kakršnokoli drugo zlorabo je prepovedana. Avtor ne prevzema odgovornosti za kakršnekoli posledice, ki bi lahko nastale zaradi uporabe tega scraperja.

@@ -2,8 +2,7 @@ name: Glavna vožnja scraper
 
 on:
   schedule:
-    # Default 15 minut
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 concurrency:

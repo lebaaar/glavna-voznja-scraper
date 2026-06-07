@@ -1,3 +1,4 @@
 .env
 seen.json
 __pycache__/
+scraper.log

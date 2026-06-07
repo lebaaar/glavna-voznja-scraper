@@ -3,6 +3,6 @@
     "kategorija": "A2",
     "obmocje": 2,
     "discordWebhookUrls": [
-        "https://discordapp.com/api/webhooks/..."
+        "https://discord.com/api/webhooks/"
     ]
 }

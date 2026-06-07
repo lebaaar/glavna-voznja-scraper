@@ -17,7 +17,7 @@ SINGLETON_URL = (
 CONFIG_FILE = "config.json"
 SEEN_FILE = "seen.json"
 
-NOTIFY_LIMIT = 5 # Število kronološko najbližjih (trenutno najboljših) terminov, ki jih spremljamo in o katerih obveščamo
+NOTIFY_LIMIT = 5 # Number of chronologically closest (currently best) dates
 HARD_PAGE_LIMIT = 100
 
 USER_AGENT = "Mozilla/5.0 (compatible; glavna-voznja-scraper/1.0)"
@@ -26,14 +26,13 @@ DISCORD_WEBHOOK_RE = re.compile(
     r"^https://(?:discord|discordapp)\.com/api/webhooks/\d+/[\w-]+/?$"
 )
 
-# "Preverjanje znanja" -> vrednost filtra `type`
 TYPE_MAP = {
     "vožnja": "1",
     "voznja": "1",
     "teorija": "2",
 }
 
-# Naziv kategorije -> vrednost filtra `cat` (iz spustnega seznama na e-upravi)
+# Category name -> value of filter `cat` (from dropdown on e-uprava)
 CATEGORY_MAP = {
     "AM": "1",
     "A1": "2",
@@ -54,10 +53,9 @@ CATEGORY_MAP = {
     "G": "17",
 }
 
-# Število območja (1-5) -> vrednost filtra `izpitniCenter` (17-21 na e-upravi)
+# Area (1-5) -> value of filter `izpitniCenter` (17-21 on e-uprava)
 AREA_CODE_OFFSET = 16
 
-# Besedilo iz podrobnosti termina ("Preverjanje znanja vožnje"/"... teorije") normaliziramo nazaj v obliko, kot je v config.json ("voznja"/"teorija")
 EXAM_TYPE_MAP = {
     "vožnje": "vožnja",
     "teorije": "teorija",
@@ -164,8 +162,6 @@ def fetch_page(filter_params, page):
 
 
 def parse_next_count(html):
-    """Stran sama javi približno število preostalih rezultatov (`data-next-count`).
-    Ko pade na 0 (ali manj), naslednje strani ne vrnejo več ničesar - konec podatkov."""
     match = re.search(r'data-next-count="([^"]*)"', html)
     if not match:
         return None
@@ -231,10 +227,6 @@ def parse_slots(html):
 
 
 def fetch_best_slots(filter_params):
-    """Brska po straneh rezultatov (teden za tednom, kronološko urejeno),
-    dokler ne nabere vsaj `NOTIFY_LIMIT` unikatnih terminov ali dokler stran
-    ne pove, da rezultatov zmanjkuje (`data-next-count` <= 0). Vrne kronološko
-    najbližjih `NOTIFY_LIMIT` terminov - "trenutno najboljše" ponudbe."""
     seen_ids = set()
     slots = []
     page = 0

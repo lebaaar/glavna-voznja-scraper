@@ -4,7 +4,7 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
 
 ## Uporaba
 1. V `config.json` nastavi parametre, enake kot bi jih na spletni strani e-uprave:
-   - `preverjanjeZnanja`: `"voznja"`, `"teorija"` ali `"vse"` (oboje).
+   - `preverjanjeZnanja`: `"voznja"` ali `"teorija"`.
    - `kategorija`: kategorija vozniškega dovoljenja - ena izmed `AM, A1, A2, A, B1, B, BE, C1, C1E, C, CE, D1, D1E, D, DE, F, G`. Lahko je niz (`"A2"`) ali seznam, če želiš spremljati več kategorij hkrati, npr. `["A2", "A1", "B"]`.
    - `obmocje`: številka Območja (`1`-`5`, glej spustni seznam "Izpitni center" na e-upravi), kjer želiš opravljati glavno vožnjo. Lahko je število (`1`) ali seznam, če želiš spremljati več območij hkrati, npr. `[1, 2, 3]`.
    - `scraperIntervalMinutes`: Interval v minutah, kako pogosto naj scraper preverja nove termine. Minimum je 15 minut. (Pri lokalnem poganjanju to določa, kako pogosto se scraper zažene v zanki; pri GitHub Actions to ne vpliva na urnik - ta je določen v `.github/workflows/scraper.yml`, glej spodaj.)

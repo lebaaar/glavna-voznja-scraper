@@ -34,9 +34,6 @@ TYPE_MAP = {
     "vožnja": "1",
     "voznja": "1",
     "teorija": "2",
-    "vse": "-",
-    "obe": "-",
-    "-": "-",
 }
 
 # Naziv kategorije -> vrednost filtra `cat` (iz spustnega seznama na e-upravi)
@@ -83,11 +80,13 @@ def as_list(value):
 
 
 def resolve_type(value):
+    if value is None or str(value).strip() == "":
+        raise ValueError("'preverjanjeZnanja' je obvezen (\"voznja\" ali \"teorija\")")
     key = str(value).strip().lower()
     if key not in TYPE_MAP:
         raise ValueError(
             f"Neznana vrednost za 'preverjanjeZnanja': {value!r}. "
-            f"Veljavne vrednosti: voznja, teorija, vse"
+            f"Veljavne vrednosti: voznja, teorija"
         )
     return TYPE_MAP[key]
 
@@ -139,7 +138,7 @@ def load_config():
 
 
 def build_filter_params(cfg):
-    params = [("lang", "si"), ("type", resolve_type(cfg.get("preverjanjeZnanja", "-")))]
+    params = [("lang", "si"), ("type", resolve_type(cfg.get("preverjanjeZnanja")))]
     for cat in resolve_categories(cfg.get("kategorija")):
         params.append(("cat", cat))
     for area in resolve_areas(cfg.get("obmocje")):

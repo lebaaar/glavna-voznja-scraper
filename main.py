@@ -7,7 +7,6 @@ from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
-from dotenv import load_dotenv
 
 PORTAL_URL = "https://e-uprava.gov.si/si/javne-evidence/prosti-termini-zemljevid.html?lang=si"
 SINGLETON_URL = (
@@ -119,6 +118,18 @@ def resolve_areas(value):
             raise ValueError(f"Območje mora biti med 1 in 5, dobil: {v!r}")
         codes.append(str(AREA_CODE_OFFSET + n))
     return codes
+
+
+def resolve_webhook_urls(value):
+    urls = [str(v).strip() for v in as_list(value) if str(v).strip()]
+    if not urls:
+        raise ValueError(
+            "'discordWebhookUrls' je obvezen (URL niz ali seznam URL-jev Discord webhookov)"
+        )
+    for url in urls:
+        if not DISCORD_WEBHOOK_RE.match(url):
+            raise ValueError(f"Discord webhook URL ni v pravilni obliki: {url!r}")
+    return urls
 
 
 def load_config():
@@ -319,25 +330,27 @@ def chunk_messages(header, slots, limit=1900):
     return chunks
 
 
-def send_discord_notification(webhook_url, new_slots, total_best):
+def send_discord_notification(webhook_urls, new_slots, total_best):
     word = "termin" if len(new_slots) == 1 else "terminov"
     header = (
         f"Najdenih **{len(new_slots)}** novih prostih {word} za glavno vožnjo "
         f"(od {total_best} trenutno najboljših)"
     )
-    for chunk in chunk_messages(header, new_slots):
-        resp = requests.post(webhook_url, json={"content": chunk}, timeout=30)
-        resp.raise_for_status()
+    chunks = chunk_messages(header, new_slots)
+    for webhook_url in webhook_urls:
+        for chunk in chunks:
+            resp = requests.post(webhook_url, json={"content": chunk}, timeout=30)
+            resp.raise_for_status()
 
 
-def run_once(filter_params, webhook_url):
+def run_once(filter_params, webhook_urls):
     seen = prune_seen(load_seen())
     best = fetch_best_slots(filter_params)
     new_slots = [slot for slot in best if slot["id"] not in seen]
 
     if new_slots:
         log(f"Najdenih {len(new_slots)} novih med {len(best)} trenutno najboljšimi termini.")
-        send_discord_notification(webhook_url, new_slots, len(best))
+        send_discord_notification(webhook_urls, new_slots, len(best))
         for slot in new_slots:
             seen[slot["id"]] = slot["date"]
     else:
@@ -347,23 +360,15 @@ def run_once(filter_params, webhook_url):
 
 
 def main():
-    load_dotenv()
-    webhook_url = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
-    if not webhook_url:
-        sys.exit("Napaka: DISCORD_WEBHOOK_URL ni nastavljen v .env.")
-    if not DISCORD_WEBHOOK_RE.match(webhook_url):
-        sys.exit(
-            "Napaka: DISCORD_WEBHOOK_URL ni v pravilni obliki"
-        )
-
     try:
         cfg = load_config()
         filter_params = build_filter_params(cfg)
+        webhook_urls = resolve_webhook_urls(cfg.get("discordWebhookUrls"))
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         sys.exit(f"Napaka v config.json: {exc}")
 
     try:
-        run_once(filter_params, webhook_url)
+        run_once(filter_params, webhook_urls)
     except requests.RequestException as exc:
         sys.exit(f"Napaka pri dostopu do e-uprave: {exc}")
 

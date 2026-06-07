@@ -1,5 +1,8 @@
 {
     "preverjanjeZnanja": "voznja",
     "kategorija": "A2",
-    "obmocje": 2
+    "obmocje": 2,
+    "discordWebhookUrls": [
+        "https://discordapp.com/api/webhooks/..."
+    ]
 }

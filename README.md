@@ -30,7 +30,8 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
 2. V nastavitvah tvojega forka pojdi v *Settings* > *Secrets and variables* > *Actions* in dodaj nov secret z imenom `DISCORD_WEBHOOK_URL` z vrednostjo tvojega Discord webhook URL-ja.
 3. V `config.json` nastavi željene parametre (glej zgoraj). Spremembe commitaj.
 4. Po potrebi prilagodi urnik (`cron`) v [`.github/workflows/scraper.yml`](.github/workflows/scraper.yml) - privzeto je nastavljen na vsakih 15 minut (`*/15 * * * *`), kar je tudi minimalni interval, ki ga GitHub Actions zanesljivo podpira.
-5. GitHub Actions bo samodejno zagnal scraper ob definiranem intervalu (lahko ga sprožiš tudi ročno preko zavihka *Actions* > *Glavna vožnja scraper* > *Run workflow*) in preverjal nove termine. Rezultati bodo poslani na tvoj Discord kanal preko webhooka.
+5. Prepričaj se, da imaš omogočene GitHub Actions za tvoj fork (zavihek *Actions* > gumb *"I understand my workflows, go ahead and enable them"*).
+6. GitHub Actions bo samodejno zagnal scraper ob definiranem intervalu (lahko ga sprožiš tudi ročno preko zavihka *Actions* > *Glavna vožnja scraper* > *Run workflow*) in preverjal nove termine. Rezultati bodo poslani na tvoj Discord kanal preko webhooka.
 
    Scraper si med zagoni zapomni že najdene termine (`seen.json`, shranjen preko GitHub Actions cache-a), zato te o istem terminu ne bo obveščal v nedogled.
 

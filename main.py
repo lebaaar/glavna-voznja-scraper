@@ -20,7 +20,7 @@ CONFIG_FILE = "config.json"
 SEEN_FILE = "seen.json"
 
 MIN_INTERVAL_MINUTES = 15
-NEW_SLOTS_TARGET = 5 # Brskanje po straneh rezultatov (teden za tednom) ustavimo, ko naberemo vsaj toliko novih terminov
+NOTIFY_LIMIT = 5 # Število kronološko najbližjih (trenutno najboljših) terminov, ki jih spremljamo in o katerih obveščamo
 HARD_PAGE_LIMIT = 100
 
 USER_AGENT = "Mozilla/5.0 (compatible; glavna-voznja-scraper/1.0)"
@@ -230,22 +230,24 @@ def parse_slots(html):
     return slots
 
 
-def fetch_relevant_slots(filter_params, seen):
-    """Brska po straneh rezultatov (teden za tednom), dokler ne naberemo
-    vsaj `NEW_SLOTS_TARGET` še neopaženih terminov ali dokler stran ne pove,
-    da rezultatov zmanjkuje (`data-next-count` <= 0)."""
-    all_slots = []
-    new_count = 0
+def fetch_best_slots(filter_params):
+    """Brska po straneh rezultatov (teden za tednom, kronološko urejeno),
+    dokler ne nabere vsaj `NOTIFY_LIMIT` unikatnih terminov ali dokler stran
+    ne pove, da rezultatov zmanjkuje (`data-next-count` <= 0). Vrne kronološko
+    najbližjih `NOTIFY_LIMIT` terminov - "trenutno najboljše" ponudbe."""
+    seen_ids = set()
+    slots = []
     page = 0
 
     while True:
         html = fetch_page(filter_params, page)
-        slots = parse_slots(html)
-        all_slots.extend(slots)
-        new_count += sum(1 for slot in slots if slot["id"] not in seen)
+        for slot in parse_slots(html):
+            if slot["id"] not in seen_ids:
+                seen_ids.add(slot["id"])
+                slots.append(slot)
         next_count = parse_next_count(html)
 
-        if new_count >= NEW_SLOTS_TARGET:
+        if len(slots) >= NOTIFY_LIMIT:
             break
         if next_count is not None and next_count <= 0:
             break
@@ -255,7 +257,7 @@ def fetch_relevant_slots(filter_params, seen):
 
         page += 1
 
-    return all_slots
+    return slots[:NOTIFY_LIMIT]
 
 
 def parse_slovenian_date(date_str):
@@ -328,10 +330,11 @@ def chunk_messages(header, slots, limit=1900):
     return chunks
 
 
-def send_discord_notification(webhook_url, new_slots):
+def send_discord_notification(webhook_url, new_slots, total_best):
     word = "termin" if len(new_slots) == 1 else "terminov"
     header = (
-        f"Najdenih **{len(new_slots)}** novih prostih {word} za glavno vožnjo"
+        f"Najdenih **{len(new_slots)}** novih prostih {word} za glavno vožnjo "
+        f"(od {total_best} trenutno najboljših)"
     )
     for chunk in chunk_messages(header, new_slots):
         resp = requests.post(webhook_url, json={"content": chunk}, timeout=30)
@@ -340,16 +343,16 @@ def send_discord_notification(webhook_url, new_slots):
 
 def run_once(filter_params, webhook_url):
     seen = prune_seen(load_seen())
-    slots = fetch_relevant_slots(filter_params, seen)
-    new_slots = [slot for slot in slots if slot["id"] not in seen]
+    best = fetch_best_slots(filter_params)
+    new_slots = [slot for slot in best if slot["id"] not in seen]
 
     if new_slots:
-        log(f"Najdenih {len(new_slots)} novih terminov (od {len(slots)} skupaj).")
-        send_discord_notification(webhook_url, new_slots)
+        log(f"Najdenih {len(new_slots)} novih med {len(best)} trenutno najboljšimi termini.")
+        send_discord_notification(webhook_url, new_slots, len(best))
         for slot in new_slots:
             seen[slot["id"]] = slot["date"]
     else:
-        log(f"Ni novih terminov ({len(slots)} najdenih skupaj).")
+        log(f"Brez sprememb med {len(best)} trenutno najboljšimi termini.")
 
     save_seen(seen)
 

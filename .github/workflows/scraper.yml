@@ -28,7 +28,7 @@ jobs:
       - name: Restore seen termini state
         uses: actions/cache@v4
         with:
-          path: seen_termini.json
+          path: seen.json
           key: seen-termini-${{ github.run_id }}
           restore-keys: |
             seen-termini-

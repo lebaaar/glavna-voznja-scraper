@@ -23,7 +23,7 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
    ```bash
    python main.py
    ```
-4. Scraper bo preverjal nove termine dokler ga ne ustaviš (npr. s `Ctrl+C`). Že najdene termine si zapomni v datoteko `seen_termini.json`, da te ob naslednjem preverjanju ne obvešča o istih terminih znova.
+4. Scraper bo preverjal nove termine dokler ga ne ustaviš (npr. s `Ctrl+C`). Že najdene termine si zapomni v datoteko `seen.json`, da te ob naslednjem preverjanju ne obvešča o istih terminih znova.
 
 ### Poganjanje preko GitHub Actions
 1. Fork-aj ta repozitorij
@@ -32,7 +32,7 @@ Scraper prostih terminov za opravljanje glavne vožnje v Sloveniji na podlagi po
 4. Po potrebi prilagodi urnik (`cron`) v [`.github/workflows/scraper.yml`](.github/workflows/scraper.yml) - privzeto je nastavljen na vsakih 15 minut (`*/15 * * * *`), kar je tudi minimalni interval, ki ga GitHub Actions zanesljivo podpira.
 5. GitHub Actions bo samodejno zagnal scraper ob definiranem intervalu (lahko ga sprožiš tudi ročno preko zavihka *Actions* > *Glavna vožnja scraper* > *Run workflow*) in preverjal nove termine. Rezultati bodo poslani na tvoj Discord kanal preko webhooka.
 
-   Scraper si med zagoni zapomni že najdene termine (`seen_termini.json`, shranjen preko GitHub Actions cache-a), zato te o istem terminu ne bo obveščal v nedogled.
+   Scraper si med zagoni zapomni že najdene termine (`seen.json`, shranjen preko GitHub Actions cache-a), zato te o istem terminu ne bo obveščal v nedogled.
 
 ## Legal
 Ta scraper je namenjen izključno za osebno uporabo in pomoč pri spremljanju prostih terminov za glavno vožnjo. Uporaba scraperja za množično zbiranje podatkov ali kakršnokoli drugo zlorabo je prepovedana. Avtor ne prevzema odgovornosti za kakršnekoli posledice, ki bi lahko nastale zaradi uporabe tega scraperja.

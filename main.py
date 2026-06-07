@@ -17,7 +17,7 @@ SINGLETON_URL = (
 )
 
 CONFIG_FILE = "config.json"
-SEEN_FILE = "seen_termini.json"
+SEEN_FILE = "seen.json"
 
 MIN_INTERVAL_MINUTES = 15
 NEW_SLOTS_TARGET = 5 # Brskanje po straneh rezultatov (teden za tednom) ustavimo, ko naberemo vsaj toliko novih terminov

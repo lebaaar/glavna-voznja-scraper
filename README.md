@@ -10,15 +10,20 @@ V `config.json` nastavi parametre, enake kot bi jih na spletni strani e-uprave:
 - `discordWebhookUrls`: URL Discord webhooka, na katerega naj scraper pošilja obvestila. Lahko je niz (`"https://discord.com/api/webhooks/..."`) ali seznam, če želiš obveščati več kanalov hkrati, npr. `["https://discord.com/api/webhooks/...", "https://discord.com/api/webhooks/..."]`.<br>Navodila za pridobitev webhook URL-ja najdeš [tukaj](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 ### Poganjanje
-`python main.py` opravi en sam zagon - preveri trenutno najboljše termine, pošlje Discord obvestilo o novih in se zaključi (že najdene termine si zapomni v `seen.json`, da te ob naslednjem zagonu ne obvešča o istih terminih znova). Za redno preverjanje scraper poganjaj periodično prek cron job-a:
+`python main.py` preveri trenutno najboljše termine, pošlje Discord obvestilo o novih in si zapomni že najdene termine v `seen.json`, da te ob naslednjem zagonu ne obvešča o istih terminih znova.
+<br>
+Za redno preverjanje novih terminov scraper poganjaj periodično:
 
-1. Namesti scraper
+**Linux / macOS**<br>
+Scraper poganjaj prek cron job-a:
+
+1. Namesti scraper:
    ```bash
    git clone https://github.com/lebaaar/glavna-voznja-scraper.git
    cd glavna-voznja-scraper
    pip install -r requirements.txt
    ```
-2. Nastavi `config.json` (glej zgoraj). Lahko izhajaš iz predloge:
+2. Nastavi `config.json` (glej zgoraj):
    ```bash
    cp config.example.json config.json
    ```
@@ -36,6 +41,9 @@ V `config.json` nastavi parametre, enake kot bi jih na spletni strani e-uprave:
    ```
    Pot (`/pot/do/glavna-voznja-scraper`) in pot do Python interpreterja prilagodi svojemu sistemu.
    Pot do Python interpreterja lahko preveriš z `which python3`.
+
+**Windows**<br>
+Scraper poganjaj preko Task Scheduler. Navodila so skoraj enaka kot zgoraj, le da namesto cron job-a uporabiš Task Scheduler. Navodila za uporabo Task Schedulerja najdeš [tukaj](https://www.windowscentral.com/how-create-automated-task-using-task-scheduler-windows-10).
 
 ## Legal
 Ta scraper je namenjen izključno za osebno uporabo in pomoč pri spremljanju prostih terminov za glavno vožnjo. Uporaba scraperja za množično zbiranje podatkov ali kakršnokoli drugo zlorabo je prepovedana. Avtor ne prevzema odgovornosti za kakršnekoli posledice, ki bi lahko nastale zaradi uporabe tega scraperja.

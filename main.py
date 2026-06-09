@@ -1,3 +1,4 @@
+import calendar
 import difflib
 import hashlib
 import json
@@ -18,7 +19,6 @@ SINGLETON_URL = (
 CONFIG_FILE = "config.json"
 SEEN_FILE = "seen.json"
 
-NOTIFY_LIMIT = 5 # Number of chronologically closest (currently best) dates
 HARD_PAGE_LIMIT = 100
 
 USER_AGENT = "Mozilla/5.0 (compatible; glavna-voznja-scraper/1.0)"
@@ -242,6 +242,18 @@ def resolve_locations(value, area_codes):
     return codes
 
 
+def resolve_months(value):
+    if value is None:
+        return 2
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"'mesecevNaprej' mora biti celo število, dobil: {value!r}")
+    if n < 1:
+        raise ValueError(f"'mesecevNaprej' mora biti vsaj 1, dobil: {n!r}")
+    return n
+
+
 def resolve_webhook_urls(value):
     urls = [str(v).strip() for v in as_list(value) if str(v).strip()]
     if not urls:
@@ -352,20 +364,34 @@ def parse_slots(html):
     return slots
 
 
-def fetch_best_slots(filter_params):
+def _add_months(d, months):
+    month = d.month - 1 + months
+    year = d.year + month // 12
+    month = month % 12 + 1
+    day = min(d.day, calendar.monthrange(year, month)[1])
+    return d.replace(year=year, month=month, day=day)
+
+
+def fetch_slots_within_months(filter_params, months):
+    cutoff = _add_months(datetime.now().date(), months)
     seen_ids = set()
     slots = []
     page = 0
 
     while True:
         html = fetch_page(filter_params, page)
+        past_cutoff = False
         for slot in parse_slots(html):
+            slot_date = parse_slovenian_date(slot["date"])
+            if slot_date is not None and slot_date > cutoff:
+                past_cutoff = True
+                break
             if slot["id"] not in seen_ids:
                 seen_ids.add(slot["id"])
                 slots.append(slot)
         next_count = parse_next_count(html)
 
-        if len(slots) >= NOTIFY_LIMIT:
+        if past_cutoff:
             break
         if next_count is not None and next_count <= 0:
             break
@@ -375,7 +401,7 @@ def fetch_best_slots(filter_params):
 
         page += 1
 
-    return slots[:NOTIFY_LIMIT]
+    return slots
 
 
 def parse_slovenian_date(date_str):
@@ -448,11 +474,11 @@ def chunk_messages(header, slots, limit=1900):
     return chunks
 
 
-def send_discord_notification(webhook_urls, new_slots, total_best):
+def send_discord_notification(webhook_urls, new_slots, months):
     word = "termin" if len(new_slots) == 1 else "terminov"
     header = (
-        f"Najdenih **{len(new_slots)}** novih prostih {word} za glavno vožnjo "
-        f"(od {total_best} trenutno najboljših)"
+        f"Najdenih **{len(new_slots)}** novih prostih {word} "
+        f"v naslednjih {months} mesecih"
     )
     chunks = chunk_messages(header, new_slots)
     for webhook_url in webhook_urls:
@@ -461,18 +487,18 @@ def send_discord_notification(webhook_urls, new_slots, total_best):
             resp.raise_for_status()
 
 
-def run_once(filter_params, webhook_urls):
+def run(filter_params, webhook_urls, months):
     seen = prune_seen(load_seen())
-    best = fetch_best_slots(filter_params)
-    new_slots = [slot for slot in best if slot["id"] not in seen]
+    all_slots = fetch_slots_within_months(filter_params, months)
+    new_slots = [slot for slot in all_slots if slot["id"] not in seen]
 
     if new_slots:
-        log(f"Najdenih {len(new_slots)} novih med {len(best)} trenutno najboljšimi termini.")
-        send_discord_notification(webhook_urls, new_slots, len(best))
+        log(f"Najdenih {len(new_slots)} novih med {len(all_slots)} termini v naslednjih {months} mesecih.")
+        send_discord_notification(webhook_urls, new_slots, months)
         for slot in new_slots:
             seen[slot["id"]] = slot["date"]
     else:
-        log(f"Brez sprememb med {len(best)} trenutno najboljšimi termini.")
+        log(f"Brez novih terminov med {len(all_slots)} termini v naslednjih {months} mesecih.")
 
     save_seen(seen)
 
@@ -482,11 +508,12 @@ def main():
         cfg = load_config()
         filter_params = build_filter_params(cfg)
         webhook_urls = resolve_webhook_urls(cfg.get("discordWebhookUrls"))
+        months = resolve_months(cfg.get("mesecevNaprej"))
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         sys.exit(f"Napaka v config.json: {exc}")
 
     try:
-        run_once(filter_params, webhook_urls)
+        run(filter_params, webhook_urls, months)
     except requests.RequestException as exc:
         sys.exit(f"Napaka pri dostopu do e-uprave: {exc}")
 

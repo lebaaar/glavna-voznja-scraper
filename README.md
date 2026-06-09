@@ -7,11 +7,12 @@ V `config.json` nastavi parametre, enake kot bi jih na spletni strani e-uprave:
 - `preverjanjeZnanja`: `"voznja"` ali `"teorija"`.
 - `kategorija`: kategorija vozniškega dovoljenja - ena izmed `AM, A1, A2, A, B1, B, BE, C1, C1E, C, CE, D1, D1E, D, DE, F, G`. Lahko je niz (`"A2"`) ali seznam, če želiš spremljati več kategorij hkrati, npr. `["A2", "A1", "B"]`.
 - `obmocje`: številka Območja (`1`-`5`, glej spustni seznam "Izpitni center" na e-upravi), kjer želiš opravljati glavno vožnjo. Lahko je število (`1`) ali seznam, če želiš spremljati več območij hkrati, npr. `[1, 2, 3]`.
+- `mesecevNaprej`: število mesecev v naprej, v katerih iščeš proste termine (npr. `2`). Scraper pregleda vse termine v tem obdobju in obvesti o vsakem novem. Privzeto: `2`.
 - `lokacija` (neobvezno): specifično izpitno mesto znotraj izbranega območja, npr. `"LJUBLJANA Cesta dveh cesarjev 176"`. Vrednost mora biti natančno tak niz, kot je prikazan v spustnem seznamu "Lokacija" na e-upravi. Vsaka lokacija mora ustrezati enemu od izbranih `obmocje`. Če izpustiš ali pustiš prazno, scraper spremlja vse lokacije znotraj izbranega Območja. Podpira tudi seznam, npr. `["LJUBLJANA Cesta dveh cesarjev 176", "Domžale, Ljubljanska cesta 71"]`.
 - `discordWebhookUrls`: URL Discord webhooka, na katerega naj scraper pošilja obvestila. Lahko je niz (`"https://discord.com/api/webhooks/..."`) ali seznam, če želiš obveščati več kanalov hkrati, npr. `["https://discord.com/api/webhooks/...", "https://discord.com/api/webhooks/..."]`.<br>Navodila za pridobitev webhook URL-ja najdeš [tukaj](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 ### Poganjanje
-`python main.py` preveri trenutno najboljše termine, pošlje Discord obvestilo o novih in si zapomni že najdene termine v `seen.json`, da te ob naslednjem zagonu ne obvešča o istih terminih znova.
+`python main.py` pregleda vse proste termine v naslednjih `mesecevNaprej` mesecih, pošlje Discord obvestilo o vsakem novem in si zapomni že najdene termine v `seen.json`, da te ob naslednjem zagonu ne obvešča o istih terminih znova.
 <br>
 Za redno preverjanje novih terminov scraper poganjaj periodično:
 

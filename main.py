@@ -1,3 +1,4 @@
+import difflib
 import hashlib
 import json
 import os
@@ -55,6 +56,94 @@ CATEGORY_MAP = {
 
 # Area (1-5) -> value of filter `izpitniCenter` (17-21 on e-uprava)
 AREA_CODE_OFFSET = 16
+
+# Location name (exactly as shown in the "Lokacija" dropdown on e-uprava) -> (value of filter `lokacija`, value of parent `izpitniCenter` / area)
+LOCATION_MAP = {
+    "1 Za izpit s tolmačem CELJE Ljubečna Cesta v Celje 14 TESTIRNICA": ("151", "19"),
+    "2 Za izpit s tolmačem TRBOVLJE Mestni trg 4 TESTIRNICA": ("167", "19"),
+    "3 VELENJE Koroška cesta 62a": ("228", "19"),
+    "3 VELENJE Koroška cesta 62a TESTIRNICA": ("229", "19"),
+    "3 Za izpit s tolmačem VELENJE Koroška cesta 62a TESTIRNICA": ("230", "19"),
+    "4 Za izpit s tolmačem SLOVENJ GRADEC Meškova 21 TESTIRNICA": ("166", "19"),
+    "AJDOVŠČINA Tovarniška cesta 26": ("242", "17"),
+    "AJDOVŠČINA Tovarniška cesta 26 TESTIRNICA Kurivo Gorica": ("241", "17"),
+    "BREŽICE Bizeljska cesta 45": ("232", "20"),
+    "BREŽICE Bizeljska cesta 45 T": ("231", "20"),
+    "DOMŽALE Ljubljanska cesta 71 TESTIRNICA": ("174", "18"),
+    "Domžale, Ljubljanska cesta 71": ("173", "18"),
+    "IDRIJA Ulica Sv Barbare 3 TESTIRNICA": ("203", "17"),
+    "Ig": ("176", "18"),
+    "ILIRSKA BISTRICA Šercerjeva cesta 17": ("235", "17"),
+    "ILIRSKA BISTRICA Šercerjeva cesta 17 TESTIRNICA": ("211", "17"),
+    "JESENICE Cesta železarjev 6a TESTIRNICA": ("168", "18"),
+    "Jesenice, Cesta železarjev 6a": ("171", "18"),
+    "KOPER Bertoki vadbena površina": ("120", "17"),
+    "Koper, Ljubljanska cesta 6": ("119", "17"),
+    "Koper, Ljubljanska cesta 6, testirnica": ("117", "17"),
+    "KOČEVJE Cesta na stadion 7": ("193", "20"),
+    "KOČEVJE VADBENA POVRŠINA HERBBY Novomeška cesta": ("194", "20"),
+    "KOČEVJE ŠD GAJ Trg zbora odposlancev 30": ("195", "20"),
+    "KRANJ Kolodvorska cesta 5": ("223", "18"),
+    "KRANJ Kolodvorska cesta 5 TESTIRNICA": ("222", "18"),
+    "KRŠKO Žadovinek 36": ("205", "20"),
+    "KRŠKO Žadovinek 36 T": ("204", "20"),
+    "Laško, Poženelova ulica 22": ("149", "19"),
+    "Ljubečna, Cesta v Celje 14": ("150", "19"),
+    "Ljubečna, Cesta v Celje 14, testirnica": ("148", "19"),
+    "LJUBLJANA Cesta dveh cesarjev 176": ("221", "18"),
+    "LJUBLJANA Cesta dveh cesarjev 176 TESTIRNICA": ("236", "18"),
+    "Ljubljana, Ježica": ("178", "18"),
+    "Ločica ob Savinji, Ločica ob Savinji 49": ("153", "19"),
+    "Maribor, Cesta k Tamu 11": ("212", "21"),
+    "Maribor, Cesta k Tamu 11, testirnica": ("213", "21"),
+    "Maribor, Zolajeva ulica 12, vadbena površina Tezno": ("147", "21"),
+    "Murska Sobota, Noršinska ulica 8": ("138", "21"),
+    "Murska Sobota, Noršinska ulica 8, testirnica": ("142", "21"),
+    "Nova Gorica, Avtobusna postaja": ("121", "17"),
+    "Nova Gorica, mejni prehod Vrtojba, vadbena površina": ("126", "17"),
+    "Nova gorica, parkirišče šole vožnje": ("210", "17"),
+    "Nova Gorica, Trg Edvarda Kardelja 1": ("209", "17"),
+    "Nova Gorica, Trg Edvarda Kardelja 1, pritličje soba 13, testirnica": ("123", "17"),
+    "NOVO MESTO BTC ČEŠČA VAS 40 samo za kat B96 BE C CE D1 D F": ("187", "20"),
+    "NOVO MESTO UE Defranceschijeva 1": ("185", "20"),
+    "NOVO MESTO UE Defranceschijeva 1 vhod z zadnje strani stavbe": ("186", "20"),
+    "Ormož, Vrazova ulica 12, testirnica": ("143", "21"),
+    "POSTOJNA Kazarje 10 EPIC": ("225", "17"),
+    "POSTOJNA Kazarje 10 EPIC TESTIRNICA": ("226", "17"),
+    "PTUJ Dornavska cesta 22B": ("146", "21"),
+    "PTUJ Dornavska cesta 22B A KAT": ("144", "21"),
+    "PTUJ Dornavska cesta 22B CCE KAT": ("145", "21"),
+    "PTUJ Dornavska cesta 22B TESTIRNICA": ("141", "21"),
+    "Ravne na Koroškem, Čečovje 12a, testirnica": ("162", "19"),
+    "SEŽANA Ulica Mirka Pirca 4": ("219", "17"),
+    "SEŽANA Ulica Mirka Pirca 4 TESTIRNICA": ("218", "17"),
+    "Slovenj Gradec, Meškova ulica 21": ("160", "19"),
+    "Slovenj Gradec, Meškova ulica 21, testirnica": ("158", "19"),
+    "SLOVENSKA BISTRICA Partizanska 22 TESTIRNICA": ("136", "21"),
+    "Slovenske Konjice, Tattenbachova ulica 2a": ("152", "19"),
+    "TOLMIN Tumov drevored 4": ("234", "17"),
+    "TOLMIN Tumov drevored 4 UE": ("244", "17"),
+    "Tolmin, Tumov drevored 4, soba IIN23, testirnica": ("125", "17"),
+    "Trbovlje, Mestni trg 4": ("157", "19"),
+    "Trbovlje, Mestni trg 4, testirnica": ("156", "19"),
+    "Vrhnika": ("184", "18"),
+    "Za izpit s tolmačem Koper, Ljubljanska 6, testirnica": ("118", "17"),
+    "Za izpit s tolmačem KRŠKO Žadovinek 36": ("208", "20"),
+    "Za izpit s tolmačem LJUBLJANA Cesta dveh cesarjev 176 TESTIRNICA": ("237", "18"),
+    "Za izpit s tolmačem Murska Sobota, Noršinska ulica 8, testirnica": ("139", "21"),
+    "Za izpit s tolmačem Nova Gorica, Trg Edvarda Kardelja 1, testirnica": ("124", "17"),
+    "Za izpit s tolmačem NOVO MESTO UE Defranceschijeva 1": ("188", "20"),
+    "Za izpit s tolmačem teorija Maribor, Cesta k Tamu 11": ("214", "21"),
+    "Za izpit s tolmačem, Ptuj, Dornavska cesta 22B, testirnica": ("140", "21"),
+    "Za izpit z tolmačem POSTOJNA Kazarje 10 EPIC TESTIRNICA": ("227", "17"),
+    "ČRNOMELJ Ulica Otona Župančiča 4": ("190", "20"),
+    "ČRNOMELJ Ulica Otona Župančiča 4 T": ("191", "20"),
+    "ŠENTJUR Cesta na kmetijsko šolo 9": ("154", "19"),
+    "ŠMARJE PRI JELŠAH Obrtniška ulica 4": ("155", "19"),
+}
+
+# Case-insensitive lookup: normalized (uppercased) name -> canonical name from LOCATION_MAP
+_LOCATION_LOOKUP = {name.upper(): name for name in LOCATION_MAP}
 
 EXAM_TYPE_MAP = {
     "vožnje": "vožnja",
@@ -118,6 +207,41 @@ def resolve_areas(value):
     return codes
 
 
+def _suggest_location(key):
+    prefix = sorted((n for n in _LOCATION_LOOKUP if n.startswith(key)), key=len)
+    if prefix:
+        return _LOCATION_LOOKUP[prefix[0]]
+    contains = sorted((n for n in _LOCATION_LOOKUP if key in n), key=len)
+    if contains:
+        return _LOCATION_LOOKUP[contains[0]]
+    close = difflib.get_close_matches(key, _LOCATION_LOOKUP.keys(), n=1, cutoff=0.6)
+    return _LOCATION_LOOKUP[close[0]] if close else None
+
+
+def resolve_locations(value, area_codes):
+    values = [v for v in as_list(value) if str(v).strip()]
+    if not values:
+        return ["-1"]
+    codes = []
+    for v in values:
+        name = str(v).strip()
+        key = name.upper()
+        canonical = _LOCATION_LOOKUP.get(key)
+        if canonical is None:
+            suggestion = _suggest_location(key)
+            if suggestion:
+                raise ValueError(f"Neznana lokacija: {name!r}. Ste mislili: {suggestion!r}?")
+            raise ValueError(f"Neznana lokacija: {name!r}.")
+        loc_code, parent_area = LOCATION_MAP[canonical]
+        if parent_area not in area_codes:
+            raise ValueError(
+                f"Lokacija {canonical!r} ne spada v izbrano območje "
+                "('lokacija' mora ustrezati enemu od izbranih 'obmocje')"
+            )
+        codes.append(loc_code)
+    return codes
+
+
 def resolve_webhook_urls(value):
     urls = [str(v).strip() for v in as_list(value) if str(v).strip()]
     if not urls:
@@ -139,10 +263,12 @@ def build_filter_params(cfg):
     params = [("lang", "si"), ("type", resolve_type(cfg.get("preverjanjeZnanja")))]
     for cat in resolve_categories(cfg.get("kategorija")):
         params.append(("cat", cat))
-    for area in resolve_areas(cfg.get("obmocje")):
+    area_codes = resolve_areas(cfg.get("obmocje"))
+    for area in area_codes:
         params.append(("izpitniCenter", area))
+    for location in resolve_locations(cfg.get("lokacija"), area_codes):
+        params.append(("lokacija", location))
     params += [
-        ("lokacija", "-1"),
         ("offset", "0"),
         ("sentinel_type", "ok"),
         ("sentinel_status", "ok"),

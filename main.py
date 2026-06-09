@@ -245,6 +245,8 @@ def resolve_locations(value, area_codes):
 def resolve_months(value):
     if value is None:
         return 2
+    if isinstance(value, float) and not value.is_integer():
+        raise ValueError(f"'mesecevNaprej' mora biti celo število, dobil: {value!r}")
     try:
         n = int(value)
     except (TypeError, ValueError):
